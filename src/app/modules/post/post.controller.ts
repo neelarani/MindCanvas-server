@@ -10,3 +10,43 @@ export const createPost = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+export const getAllPosts = catchAsync(async (req, res) => {
+  const result = await service.getAllPosts();
+  sendResponse(res, {
+    success: true,
+    status: HTTP_CODE.OK,
+    message: 'Retrieved all posts',
+    data: result,
+  });
+});
+
+export const getSinglePost = catchAsync(async (req, res) => {
+  const result = await service.getSinglePost(Number(req.params.id));
+  sendResponse(res, {
+    success: true,
+    status: HTTP_CODE.OK,
+    message: 'Post retrieved successfully!',
+    data: result,
+  });
+});
+
+export const updatePost = catchAsync(async (req, res) => {
+  const result = await service.updatePost(Number(req.params.id), req.body);
+  sendResponse(res, {
+    success: true,
+    status: HTTP_CODE.OK,
+    message: 'Post updated successfully!',
+    data: result,
+  });
+});
+
+export const deletePost = catchAsync(async (req, res) => {
+  const result = await service.deletePost(Number(req.params.id));
+  sendResponse(res, {
+    success: true,
+    status: HTTP_CODE.OK,
+    message: 'Post deleted successfully!',
+    data: result,
+  });
+});

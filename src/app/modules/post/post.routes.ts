@@ -10,4 +10,16 @@ router.post(
   controller.createPost
 );
 
+router.get('/all-post', controller.getAllPosts);
+
+router.get('/:id', controller.getSinglePost);
+
+router.patch(
+  '/update/:id',
+  validateRequest(validation.updatePostSchema),
+  controller.updatePost
+);
+
+router.delete('/:id', controller.deletePost);
+
 export default router;
