@@ -19,8 +19,29 @@ export const createPost = async (
   return createdPost;
 };
 
-export const getAllPosts = async () => {
+export const getAllPosts = async ({
+  page,
+  limit,
+  search,
+}: {
+  page: number;
+  limit: number;
+  search: string;
+}) => {
+  const skip = (page - 1) * limit;
   const posts = await prisma.post.findMany({
+    skip,
+    take: limit,
+    where: {
+      OR: [
+        {
+          title: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ],
+    },
     select: {
       id: true,
       title: true,

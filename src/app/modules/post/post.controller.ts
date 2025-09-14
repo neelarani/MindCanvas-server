@@ -12,7 +12,10 @@ export const createPost = catchAsync(async (req, res) => {
 });
 
 export const getAllPosts = catchAsync(async (req, res) => {
-  const result = await service.getAllPosts();
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const search = (req.query.search as string) || '';
+  const result = await service.getAllPosts({ page, limit, search });
   sendResponse(res, {
     success: true,
     status: HTTP_CODE.OK,
