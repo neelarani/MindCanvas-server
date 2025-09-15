@@ -1,5 +1,6 @@
 import { prisma } from '@/config';
 import { Post, Prisma } from '@/generated/prisma';
+import { boolean } from 'zod';
 
 export const createPost = async (
   payload: Prisma.PostCreateInput
@@ -20,53 +21,87 @@ export const createPost = async (
 };
 
 export const getAllPosts = async ({
-  page,
-  limit,
+  page = 1,
+  limit = 10,
   search,
+  isFeatured,
+  tags,
+  orderBy,
 }: {
-  page: number;
-  limit: number;
-  search: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  isFeatured?: boolean;
+  tags?: string[];
+  orderBy?: 'asc' | 'desc';
 }) => {
   const skip = (page - 1) * limit;
+  const where: any = {
+    AND: [
+      search && {
+        OR: [
+          {
+            title: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+          {
+            content: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+
+      typeof isFeatured === 'boolean' && { isFeatured },
+      tags && tags?.length > 0 && { tags: { hasEvery: tags } },
+    ].filter(Boolean),
+  };
   const posts = await prisma.post.findMany({
     skip,
     take: limit,
-    where: {
-      OR: [
-        {
-          title: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-      ],
-    },
-    select: {
-      id: true,
-      title: true,
-      content: true,
-      tags: true,
+    where,
+    include: {
       author: true,
     },
+    orderBy: {
+      createdAt: orderBy,
+    },
   });
-  return posts;
+
+  const total = await prisma.post.count({ where });
+  return {
+    data: posts,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 export const getSinglePost = async (id: number) => {
-  const post = await prisma.post.findUnique({
-    where: {
-      id,
-    },
-    select: {
-      id: true,
-      title: true,
-      content: true,
-      tags: true,
-      author: true,
-    },
+  return await prisma.$transaction(async tx => {
+    await tx.post.update({
+      where: {
+        id,
+      },
+      data: {
+        views: {
+          increment: 1,
+        },
+      },
+    });
+    return await tx.post.findUnique({
+      where: { id },
+      include: {
+        author: true,
+      },
+    });
   });
-  return post;
 };
 
 export const updatePost = async (

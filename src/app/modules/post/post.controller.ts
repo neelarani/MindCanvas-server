@@ -15,7 +15,19 @@ export const getAllPosts = catchAsync(async (req, res) => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 10;
   const search = (req.query.search as string) || '';
-  const result = await service.getAllPosts({ page, limit, search });
+  const isFeatured = req.query.isFeatured
+    ? req.body.isFeatured === 'true'
+    : undefined;
+  const tags = req.query.tags ? (req.query.tags as string).split(',') : [];
+  const orderBy = (req.query.orderBy as 'asc' | 'desc') || 'asc';
+  const result = await service.getAllPosts({
+    page,
+    limit,
+    search,
+    isFeatured,
+    tags,
+    orderBy,
+  });
   sendResponse(res, {
     success: true,
     status: HTTP_CODE.OK,
