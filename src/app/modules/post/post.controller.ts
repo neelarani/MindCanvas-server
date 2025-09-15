@@ -37,7 +37,8 @@ export const getAllPosts = catchAsync(async (req, res) => {
 });
 
 export const getSinglePost = catchAsync(async (req, res) => {
-  const result = await service.getSinglePost(Number(req.params.id));
+  const id = Number(req.params.id);
+  const result = await service.getSinglePost(id);
   sendResponse(res, {
     success: true,
     status: HTTP_CODE.OK,
@@ -62,6 +63,16 @@ export const deletePost = catchAsync(async (req, res) => {
     success: true,
     status: HTTP_CODE.OK,
     message: 'Post deleted successfully!',
+    data: result,
+  });
+});
+
+export const getBlogStat = catchAsync(async (req, res) => {
+  const result = await service.getBlogStat();
+  sendResponse(res, {
+    success: true,
+    status: HTTP_CODE.OK,
+    message: 'Retrieve Blog Stats!',
     data: result,
   });
 });

@@ -10,4 +10,8 @@ export default [
     path: '/post',
     route: module.PostRoutes,
   },
+  {
+    path: '/auth',
+    route: module.AuthRoutes,
+  },
 ].reduce((router, module) => router.use(module.path, module.route), Router());

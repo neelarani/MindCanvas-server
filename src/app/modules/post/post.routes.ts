@@ -22,4 +22,6 @@ router.patch(
 
 router.delete('/:id', controller.deletePost);
 
+router.get('/stats', controller.getBlogStat);
+
 export default router;

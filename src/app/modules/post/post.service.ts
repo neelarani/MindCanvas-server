@@ -1,6 +1,7 @@
 import { prisma } from '@/config';
 import { Post, Prisma } from '@/generated/prisma';
 import { boolean } from 'zod';
+import { catchAsync } from '@/shared';
 
 export const createPost = async (
   payload: Prisma.PostCreateInput
@@ -84,6 +85,7 @@ export const getAllPosts = async ({
 };
 
 export const getSinglePost = async (id: number) => {
+  if (!id) throw new Error('Post ID is required');
   return await prisma.$transaction(async tx => {
     await tx.post.update({
       where: {
@@ -98,7 +100,15 @@ export const getSinglePost = async (id: number) => {
     return await tx.post.findUnique({
       where: { id },
       include: {
-        author: true,
+        author: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+            picture: true,
+            createdAt: true,
+          },
+        },
       },
     });
   });
@@ -124,4 +134,54 @@ export const deletePost = async (id: number) => {
     },
   });
   return deletedPost;
+};
+
+export const getBlogStat = async () => {
+  return await prisma.$transaction(async tx => {
+    const aggregates = await tx.post.aggregate({
+      _count: true,
+      _sum: { views: true },
+      _avg: { views: true },
+      _max: { views: true },
+      _min: { views: true },
+    });
+
+    const featuredCount = await tx.post.count({
+      where: {
+        isFeatured: true,
+      },
+    });
+
+    const topFeatured = await tx.post.findFirst({
+      where: {
+        isFeatured: true,
+      },
+      orderBy: { views: 'desc' },
+    });
+
+    const lastweek = new Date();
+    lastweek.setDate(lastweek.getDate() - 7);
+
+    const lastWeekPost = await tx.post.count({
+      where: {
+        createdAt: {
+          gte: lastweek,
+        },
+      },
+    });
+    return {
+      stats: {
+        totalPosts: aggregates._count ?? 0,
+        totalViews: aggregates._sum.views ?? 0,
+        avgViews: aggregates._avg.views ?? 0,
+        minViews: aggregates._min.views ?? 0,
+        maxViews: aggregates._max.views ?? 0,
+      },
+      featured: {
+        count: featuredCount,
+        topPost: topFeatured,
+      },
+      lastWeekPost,
+    };
+  });
 };
